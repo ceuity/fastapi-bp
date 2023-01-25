@@ -1,0 +1,44 @@
+version: "3.7"
+
+volumes:
+  mgo-data:
+    driver: local
+  mgo-config:
+    driver: local
+
+services:
+  api:
+    container_name: api
+    image: fastapi-bp:dev
+    command: uvicorn app.main:app --log-level=info --host 0.0.0.0 --port 5000 --reload
+    env_file:
+      - fastapi-bp.env
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./app:/code/app
+      - ./secrets/.aws:/root/.aws:ro
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    container_name: mongodb
+    image: mongo:6.0.2
+    volumes:
+      - mgo-data:/data/db
+      - mgo-config:/data/configdb
+    ports:
+      - "27017:27017"
+    restart: always
+
+  db-web:
+    container_name: mongodb-express
+    image: mongo-express:0.54
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=db
+    depends_on:
+      - db
+    restart: always

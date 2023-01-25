@@ -1,0 +1,13 @@
+fastapi[all]
+motor
+dependency-injector
+gunicorn
+requests
+pytest_asyncio
+dnspython
+pyjwt
+aiobotocore[awscli]
+types-aiobotocore[essential]
+awscli
+pytest
+pytest-dotenv

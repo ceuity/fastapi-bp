@@ -1,0 +1,33 @@
+FROM python:3.11-alpine3.17 as builder
+
+RUN apk update && apk add --no-cache \
+    build-base \
+    libffi-dev \
+    openssl-dev \
+    cargo \
+    patchelf \
+    && rm -rf /var/cache/apk/*
+
+COPY requirements.txt .
+RUN pip install --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir -r requirements.txt \
+    && rm requirements.txt
+
+WORKDIR /tmp
+RUN mkdir -p site-packages bin
+RUN cp -r /usr/local/lib/python3.11/site-packages/* ./site-packages
+RUN cp -r /usr/local/bin/* ./bin
+
+#--------------------------------------------------------------------------
+FROM python:3.11-alpine3.17
+COPY --from=builder /tmp/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /tmp/bin /usr/local/bin
+
+RUN apk add tzdata \
+    && cp /usr/share/zoneinfo/Asia/Seoul /etc/localtime \
+    && echo "Asia/Seoul" > /etc/timezone \
+    && apk del tzdata
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt \
+    && rm requirements.txt
